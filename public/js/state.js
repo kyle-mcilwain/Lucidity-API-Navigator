@@ -1,10 +1,14 @@
 export const state = {
   spec: null,
   baseUrl: '',
+  tenantBaseUrl: '',
+  specUrl: '',
   selectedKey: null,
   bearerToken: '',
+  apiUser: '',
   extraHeaders: [],
   lastResponse: null,
+  operations: [],
 };
 
 const listeners = new Set();
@@ -22,7 +26,7 @@ export function setSpec(spec) {
   state.spec = spec;
   state.selectedKey = null;
   const firstServer = spec?.servers?.[0]?.url ?? '';
-  state.baseUrl = firstServer;
+  state.baseUrl = state.tenantBaseUrl || firstServer;
   notify('spec', spec);
 }
 
@@ -36,9 +40,25 @@ export function setBaseUrl(url) {
   notify('baseUrl', url);
 }
 
+export function setTenantBaseUrl(url) {
+  state.tenantBaseUrl = url;
+  if (url) state.baseUrl = url;
+  notify('tenantBaseUrl', url);
+}
+
+export function setSpecUrl(url) {
+  state.specUrl = url;
+  notify('specUrl', url);
+}
+
 export function setBearerToken(token) {
   state.bearerToken = token;
   notify('bearerToken', token);
+}
+
+export function setApiUser(user) {
+  state.apiUser = user;
+  notify('apiUser', user);
 }
 
 export function setExtraHeaders(rows) {
