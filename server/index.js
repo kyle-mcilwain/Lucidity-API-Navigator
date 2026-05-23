@@ -20,7 +20,7 @@ app.use('/api/credentials', credentials);
 app.use(express.static(publicDir));
 app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 3010;
 app.listen(port, '127.0.0.1', () => {
   console.log(`Lucidity API Navigator running at http://localhost:${port}`);
 });
