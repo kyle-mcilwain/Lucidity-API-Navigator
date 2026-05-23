@@ -1,20 +1,29 @@
 import { state, setBearerToken, setAuthStatus } from './state.js';
 
+const TOKEN_KEYS = ['access_token', 'accessToken', 'jwt', 'id_token', 'bearer', 'token'];
+
 function extractToken(body) {
   if (typeof body === 'string') {
     const trimmed = body.trim();
     return trimmed.length > 20 ? trimmed.replace(/^"|"$/g, '') : null;
   }
   if (!body || typeof body !== 'object') return null;
-  return (
-    body.token ??
-    body.accessToken ??
-    body.access_token ??
-    body.jwt ??
-    body.bearer ??
-    body.id_token ??
-    null
-  );
+
+  const queue = [body];
+  const seen = new Set();
+  while (queue.length) {
+    const node = queue.shift();
+    if (!node || typeof node !== 'object' || seen.has(node)) continue;
+    seen.add(node);
+    for (const key of TOKEN_KEYS) {
+      const v = node[key];
+      if (typeof v === 'string' && v.length > 20) return v;
+    }
+    for (const v of Object.values(node)) {
+      if (v && typeof v === 'object') queue.push(v);
+    }
+  }
+  return null;
 }
 
 function summarise(body) {
