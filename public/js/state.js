@@ -4,8 +4,11 @@ export const state = {
   tenantBaseUrl: '',
   specUrl: '',
   selectedKey: null,
+  apiKey: '',
   bearerToken: '',
   apiUser: '',
+  authStatus: 'idle',
+  authMessage: '',
   extraHeaders: [],
   lastResponse: null,
   operations: [],
@@ -56,9 +59,20 @@ export function setBearerToken(token) {
   notify('bearerToken', token);
 }
 
+export function setApiKey(key) {
+  state.apiKey = key;
+  notify('apiKey', key);
+}
+
 export function setApiUser(user) {
   state.apiUser = user;
   notify('apiUser', user);
+}
+
+export function setAuthStatus(status, message = '') {
+  state.authStatus = status;
+  state.authMessage = message;
+  notify('authStatus', { status, message });
 }
 
 export function setExtraHeaders(rows) {

@@ -38,13 +38,15 @@
         <input id="api-user" type="text" placeholder="your.username" autocomplete="off" spellcheck="false" />
       </label>
       <label>
-        API key / Bearer token (sent as <code>Authorization: Bearer &lt;token&gt;</code>)
-        <textarea id="bearer-token" rows="3" placeholder="iecp_… or eyJhbGciOi…" spellcheck="false"></textarea>
+        Public API Token (the long-lived <code>iecp_…</code> value; exchanged at <code>/authenticate</code> for a JWT sent as <code>api-key</code>)
+        <textarea id="api-key" rows="3" placeholder="iecp_…" spellcheck="false"></textarea>
       </label>
       <div class="creds-actions">
+        <button id="authenticate-btn" type="button">Authenticate</button>
         <button id="save-creds-btn" type="button">Save locally</button>
-        <span id="creds-status" class="note"></span>
       </div>
+      <p id="auth-status" class="note" data-status="idle"></p>
+      <p id="creds-status" class="note"></p>
       <div class="extra-headers">
         <h3>Extra headers (sent with every request)</h3>
         <div id="extra-headers-list"></div>
