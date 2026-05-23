@@ -30,15 +30,26 @@
     <aside id="auth-panel" class="auth-panel" hidden>
       <h2>Authorization</h2>
       <label>
-        Bearer token (sent as <code>Authorization: Bearer &lt;token&gt;</code>)
-        <textarea id="bearer-token" rows="3" placeholder="eyJhbGciOi…"></textarea>
+        API user (sent as <code>X-API-User</code> header)
+        <input id="api-user" type="text" placeholder="your.username" autocomplete="off" spellcheck="false" />
       </label>
+      <label>
+        API key / Bearer token (sent as <code>Authorization: Bearer &lt;token&gt;</code>)
+        <textarea id="bearer-token" rows="3" placeholder="iecp_… or eyJhbGciOi…" spellcheck="false"></textarea>
+      </label>
+      <div class="creds-actions">
+        <button id="save-creds-btn" type="button">Save locally</button>
+        <span id="creds-status" class="note"></span>
+      </div>
       <div class="extra-headers">
         <h3>Extra headers (sent with every request)</h3>
         <div id="extra-headers-list"></div>
         <button id="add-header-btn" type="button">+ Add header</button>
       </div>
-      <p class="note">Tokens are held in memory only. Refresh the page to clear them.</p>
+      <p class="note">
+        Tokens live in memory by default. Click <strong>Save locally</strong> to persist them to
+        <code>~/.lucidity-navigator/credentials.json</code> (mode 0600, never committed).
+      </p>
     </aside>
 
     <main class="layout">

@@ -150,6 +150,21 @@ button.primary:hover {
   width: 100%;
 }
 
+.creds-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-panel input[type="text"] {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
 .extra-headers {
   display: flex;
   flex-direction: column;

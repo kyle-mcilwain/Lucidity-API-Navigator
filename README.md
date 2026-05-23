@@ -36,9 +36,25 @@ Swagger 2.0 specs are automatically converted to OpenAPI 3.0 internally.
 
 ## Set authentication
 
-Click **Auth** in the top bar. Paste your Lucidity Bearer JWT. It is added as `Authorization: Bearer <token>` on every request. Per Ideagen's docs, Lucidity tokens are RS256 JWTs that expire ~2 hours — re-paste a fresh one when it expires.
+Click **Auth** in the top bar.
 
-Need extra static headers? Use the **Extra headers** rows in the same panel.
+- **API key / Bearer token** — sent as `Authorization: Bearer <token>` on every request.
+- **API user** — sent as `X-API-User: <user>` on every request.
+- **Extra headers** — arbitrary `name: value` pairs sent on every request.
+
+By default these live in memory only (refresh clears them). Click **Save locally** to persist them to `~/.lucidity-navigator/credentials.json` (mode `0600`, never committed). The app pre-fills from that file on every load.
+
+You can also pre-create the file manually:
+
+```bash
+mkdir -p ~/.lucidity-navigator
+cat > ~/.lucidity-navigator/credentials.json <<'EOF'
+{"user": "your.username", "apiKey": "iecp_..."}
+EOF
+chmod 600 ~/.lucidity-navigator/credentials.json
+```
+
+Lucidity tokens may expire — re-paste a fresh one when calls start returning 401.
 
 ## Make a request
 
