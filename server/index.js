@@ -5,6 +5,7 @@ import health from './routes/health.js';
 import spec from './routes/spec.js';
 import execute from './routes/execute.js';
 import credentials from './routes/credentials.js';
+import auth from './routes/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, '..', 'public');
@@ -16,6 +17,7 @@ app.use('/api/health', health);
 app.use('/api/spec', spec);
 app.use('/api/execute', execute);
 app.use('/api/credentials', credentials);
+app.use('/api/auth', auth);
 
 app.use(express.static(publicDir));
 app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));

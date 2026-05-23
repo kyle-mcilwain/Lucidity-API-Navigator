@@ -1,21 +1,25 @@
 import {
   state,
-  setBearerToken,
+  setApiKey,
   setExtraHeaders,
   setApiUser,
   setTenantBaseUrl,
   setSpecUrl,
+  subscribe,
 } from './state.js';
 import { showToast } from './toast.js';
+import { authenticate } from './authFlow.js';
 
 const panelEl = document.getElementById('auth-panel');
 const toggleEl = document.getElementById('auth-toggle');
-const tokenEl = document.getElementById('bearer-token');
+const apiKeyEl = document.getElementById('api-key');
 const userEl = document.getElementById('api-user');
 const tenantEl = document.getElementById('tenant-base-url');
 const listEl = document.getElementById('extra-headers-list');
 const addBtn = document.getElementById('add-header-btn');
 const saveBtn = document.getElementById('save-creds-btn');
+const authBtn = document.getElementById('authenticate-btn');
+const authStatusEl = document.getElementById('auth-status');
 const credsStatusEl = document.getElementById('creds-status');
 const specUrlInput = document.getElementById('spec-url');
 
@@ -23,8 +27,8 @@ toggleEl.addEventListener('click', () => {
   panelEl.hidden = !panelEl.hidden;
 });
 
-tokenEl.addEventListener('input', (e) => {
-  setBearerToken(e.target.value.trim());
+apiKeyEl.addEventListener('input', (e) => {
+  setApiKey(e.target.value.trim());
 });
 
 userEl.addEventListener('input', (e) => {
@@ -33,6 +37,19 @@ userEl.addEventListener('input', (e) => {
 
 tenantEl.addEventListener('input', (e) => {
   setTenantBaseUrl(e.target.value.trim());
+});
+
+authBtn.addEventListener('click', async () => {
+  authBtn.disabled = true;
+  authBtn.textContent = 'Authenticating…';
+  try {
+    const jwt = await authenticate();
+    if (jwt) showToast('Authenticated.');
+    else if (state.authMessage) showToast(state.authMessage, { error: true, duration: 10000 });
+  } finally {
+    authBtn.disabled = false;
+    authBtn.textContent = 'Authenticate';
+  }
 });
 
 function renderRows() {
@@ -89,7 +106,7 @@ saveBtn.addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user: state.apiUser,
-        apiKey: state.bearerToken,
+        apiKey: state.apiKey,
         tenantBaseUrl: state.tenantBaseUrl,
         specUrl: specUrlInput.value.trim(),
       }),
@@ -114,11 +131,9 @@ export function buildAuthHeaders() {
   for (const row of state.extraHeaders) {
     if (row.name && row.value) headers[row.name] = row.value;
   }
-  if (state.bearerToken) {
-    headers['Authorization'] = `Bearer ${state.bearerToken}`;
-  }
-  if (state.apiUser) {
-    headers['X-API-User'] = state.apiUser;
+  const credential = state.bearerToken || state.apiKey;
+  if (credential) {
+    headers['Authorization'] = `Bearer ${credential}`;
   }
   return headers;
 }
@@ -134,8 +149,8 @@ export async function loadLocalCredentials() {
     }
     const { user, apiKey, tenantBaseUrl, specUrl } = data.credentials;
     if (apiKey) {
-      tokenEl.value = apiKey;
-      setBearerToken(apiKey);
+      apiKeyEl.value = apiKey;
+      setApiKey(apiKey);
     }
     if (user) {
       userEl.value = user;
@@ -155,5 +170,13 @@ export async function loadLocalCredentials() {
     return null;
   }
 }
+
+subscribe((key, value) => {
+  if (key === 'authStatus' && authStatusEl) {
+    const { status, message } = value;
+    authStatusEl.textContent = message;
+    authStatusEl.dataset.status = status;
+  }
+});
 
 renderRows();

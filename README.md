@@ -45,15 +45,32 @@ Auto-loaded from the URL in `credentials.json`. To switch:
 
 **If SwaggerHub returns 403** to the server-side fetch: open the SwaggerHub page in your browser → **Export → Download API → JSON (resolved)** → click **Upload spec** in the app. Swagger 2.0 specs are converted to OpenAPI 3.0 internally.
 
-## Adjusting auth if the API returns 401/403
+## Authentication flow
 
-The current auth assumption is `Authorization: Bearer <iecp_...>` + `X-API-User: <username>`. If Ideagen's spec actually expects a different layout, you have three quick adjustments:
+Lucidity uses a token-exchange. The `iecp_…` API key is **not** sent on every request — it is POSTed to `/authenticate` to obtain a short-lived JWT, which is then sent as `Authorization: Bearer <jwt>` on every API call.
 
-1. **Different Bearer prefix** — clear the API key field; add a custom `Authorization` row under **Extra headers** with the exact value Ideagen wants (e.g. `ApiKey iecp_...`).
-2. **Basic auth (user + key)** — clear both fields; add an `Authorization` extra header with value `Basic <base64(user:key)>`. Generate the base64 string with `printf 'kyle.mitchell:iecp_xxx' | base64`.
-3. **Custom header name for the key** — clear the API key field; add an extra header like `X-API-Key: iecp_xxx`.
+What the app does on startup:
 
-Every "Extra header" you add is sent on every request — they're the universal escape hatch.
+1. Reads `credentials.json` → fills `apiUser`, `apiKey`, `tenantBaseUrl`, `specUrl` in the UI.
+2. POSTs `{username, token}` to `<tenantBaseUrl>/authenticate` via the server-side proxy at `/api/auth/login`.
+3. Extracts the JWT from the response (looks for `token`, `accessToken`, `access_token`, `jwt`, or `bearer`).
+4. Sets the JWT as the credential used in every subsequent `Authorization` header.
+5. Auto-loads the OpenAPI spec.
+
+The auth status line in the Auth panel shows the current state. A manual **Authenticate** button re-runs the flow whenever you want to refresh the JWT.
+
+### Automatic re-auth on 401
+
+If a request returns 401, the app re-runs `/authenticate` and retries the original call once. Stale/expired JWTs are transparent to you.
+
+### If the response shape is unexpected
+
+If `/authenticate` returns 200 but the app says "no recognisable token field", inspect the response body shown in the auth-status line. Add the field name to `extractToken()` in `public/js/authFlow.js`, or paste the JWT directly into the API key field and click **Authenticate** to skip the exchange.
+
+### Override paths
+
+- **Different JWT header** — add an `Authorization` row under **Extra headers** to override (extra headers take priority of `Authorization` last-write-wins).
+- **No `/authenticate` endpoint** — clear the API key field; paste a JWT (or any header value) into an `Authorization` extra header.
 
 ## Make a request
 

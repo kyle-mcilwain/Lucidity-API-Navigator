@@ -1,5 +1,6 @@
 import { state, setLastResponse, subscribe } from './state.js';
 import { buildAuthHeaders } from './authPanel.js';
+import { authenticate } from './authFlow.js';
 import { showToast } from './toast.js';
 
 const containerEl = document.getElementById('request-builder');
@@ -333,21 +334,34 @@ function renderOperation(opEntry) {
     }
     const headers = { ...buildAuthHeaders(), ...headerParams };
 
-    sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending…';
-    try {
+    async function sendOnce(currentHeaders) {
       const res = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           method: opEntry.method,
           url: fullUrl,
-          headers,
+          headers: currentHeaders,
           query: queryParams,
           body: bodyValue,
         }),
       });
-      const data = await res.json();
+      return res.json();
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    try {
+      let data = await sendOnce(headers);
+      if (data?.status === 401 && state.apiKey && state.apiUser && state.tenantBaseUrl) {
+        sendBtn.textContent = 'Re-auth…';
+        const fresh = await authenticate();
+        if (fresh) {
+          sendBtn.textContent = 'Retrying…';
+          const retryHeaders = { ...buildAuthHeaders(), ...headerParams };
+          data = await sendOnce(retryHeaders);
+        }
+      }
       setLastResponse(data);
     } catch (e) {
       setLastResponse({ networkError: true, error: e.message, durationMs: 0 });
