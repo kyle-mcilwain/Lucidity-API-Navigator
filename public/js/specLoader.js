@@ -6,7 +6,7 @@ const urlEl = document.getElementById('spec-url');
 const fileEl = document.getElementById('spec-file');
 const loadBtn = document.getElementById('load-url-btn');
 
-async function loadFromUrl(url) {
+export async function loadFromUrl(url, { silent = false } = {}) {
   loadBtn.disabled = true;
   loadBtn.textContent = 'Loading…';
   try {
@@ -17,13 +17,22 @@ async function loadFromUrl(url) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showToast(`Spec load failed: ${data.error || res.statusText}`, { error: true, duration: 8000 });
-      return;
+      if (!silent) {
+        showToast(
+          `Spec load failed: ${data.error || res.statusText}. Try downloading the spec from SwaggerHub (Export → Download API → JSON resolved) and clicking Upload spec.`,
+          { error: true, duration: 12000 },
+        );
+      }
+      return false;
     }
     setSpec(data.spec);
-    showToast(`Loaded ${data.spec.info?.title || 'spec'} (${Object.keys(data.spec.paths || {}).length} paths)`);
+    showToast(
+      `Loaded ${data.spec.info?.title || 'spec'} (${Object.keys(data.spec.paths || {}).length} paths)`,
+    );
+    return true;
   } catch (e) {
-    showToast(`Spec load failed: ${e.message}`, { error: true });
+    if (!silent) showToast(`Spec load failed: ${e.message}`, { error: true });
+    return false;
   } finally {
     loadBtn.disabled = false;
     loadBtn.textContent = 'Load URL';

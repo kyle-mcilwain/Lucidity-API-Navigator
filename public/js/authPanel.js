@@ -1,16 +1,23 @@
-import { state, setBearerToken, setExtraHeaders } from './state.js';
+import {
+  state,
+  setBearerToken,
+  setExtraHeaders,
+  setApiUser,
+  setTenantBaseUrl,
+  setSpecUrl,
+} from './state.js';
 import { showToast } from './toast.js';
 
 const panelEl = document.getElementById('auth-panel');
 const toggleEl = document.getElementById('auth-toggle');
 const tokenEl = document.getElementById('bearer-token');
 const userEl = document.getElementById('api-user');
+const tenantEl = document.getElementById('tenant-base-url');
 const listEl = document.getElementById('extra-headers-list');
 const addBtn = document.getElementById('add-header-btn');
 const saveBtn = document.getElementById('save-creds-btn');
 const credsStatusEl = document.getElementById('creds-status');
-
-let apiUser = '';
+const specUrlInput = document.getElementById('spec-url');
 
 toggleEl.addEventListener('click', () => {
   panelEl.hidden = !panelEl.hidden;
@@ -21,7 +28,11 @@ tokenEl.addEventListener('input', (e) => {
 });
 
 userEl.addEventListener('input', (e) => {
-  apiUser = e.target.value.trim();
+  setApiUser(e.target.value.trim());
+});
+
+tenantEl.addEventListener('input', (e) => {
+  setTenantBaseUrl(e.target.value.trim());
 });
 
 function renderRows() {
@@ -76,7 +87,12 @@ saveBtn.addEventListener('click', async () => {
     const res = await fetch('/api/credentials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: apiUser, apiKey: state.bearerToken }),
+      body: JSON.stringify({
+        user: state.apiUser,
+        apiKey: state.bearerToken,
+        tenantBaseUrl: state.tenantBaseUrl,
+        specUrl: specUrlInput.value.trim(),
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -101,35 +117,43 @@ export function buildAuthHeaders() {
   if (state.bearerToken) {
     headers['Authorization'] = `Bearer ${state.bearerToken}`;
   }
-  if (apiUser) {
-    headers['X-API-User'] = apiUser;
+  if (state.apiUser) {
+    headers['X-API-User'] = state.apiUser;
   }
   return headers;
 }
 
-async function loadLocalCredentials() {
+export async function loadLocalCredentials() {
   try {
     const res = await fetch('/api/credentials');
-    if (!res.ok) return;
+    if (!res.ok) return null;
     const data = await res.json();
     if (!data.credentials) {
-      credsStatusEl.textContent = `No local credentials yet. Save to ${data.path} to persist.`;
-      return;
+      credsStatusEl.textContent = `No saved credentials. Edit fields above and click Save locally.`;
+      return null;
     }
-    const { user, apiKey } = data.credentials;
+    const { user, apiKey, tenantBaseUrl, specUrl } = data.credentials;
     if (apiKey) {
       tokenEl.value = apiKey;
       setBearerToken(apiKey);
     }
     if (user) {
       userEl.value = user;
-      apiUser = user;
+      setApiUser(user);
+    }
+    if (tenantBaseUrl) {
+      tenantEl.value = tenantBaseUrl;
+      setTenantBaseUrl(tenantBaseUrl);
+    }
+    if (specUrl) {
+      specUrlInput.value = specUrl;
+      setSpecUrl(specUrl);
     }
     credsStatusEl.textContent = `Loaded credentials for ${user || '(no user)'} from ${data.path}`;
+    return data.credentials;
   } catch {
-    // No-op: credentials are optional.
+    return null;
   }
 }
 
 renderRows();
-loadLocalCredentials();

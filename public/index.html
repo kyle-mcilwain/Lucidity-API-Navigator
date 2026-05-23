@@ -30,6 +30,10 @@
     <aside id="auth-panel" class="auth-panel" hidden>
       <h2>Authorization</h2>
       <label>
+        Tenant base URL (used as the default for every request)
+        <input id="tenant-base-url" type="text" placeholder="https://yourtenant.luciditysoftware.com.au" autocomplete="off" spellcheck="false" />
+      </label>
+      <label>
         API user (sent as <code>X-API-User</code> header)
         <input id="api-user" type="text" placeholder="your.username" autocomplete="off" spellcheck="false" />
       </label>
@@ -48,7 +52,8 @@
       </div>
       <p class="note">
         Tokens live in memory by default. Click <strong>Save locally</strong> to persist them to
-        <code>~/.lucidity-navigator/credentials.json</code> (mode 0600, never committed).
+        <code>~/.lucidity-navigator/credentials.json</code> (mode 0600, never committed). Repo-level
+        <code>credentials.json</code> is a committed fallback.
       </p>
     </aside>
 
