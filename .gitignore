@@ -1,0 +1,5 @@
+node_modules/
+.lucidity-navigator/
+*.log
+.DS_Store
+.env
