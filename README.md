@@ -47,30 +47,38 @@ Auto-loaded from the URL in `credentials.json`. To switch:
 
 ## Authentication flow
 
-Lucidity uses a token-exchange. The `iecp_…` API key is **not** sent on every request — it is POSTed to `/authenticate` to obtain a short-lived JWT, which is then sent as `Authorization: Bearer <jwt>` on every API call.
+Lucidity uses a token-exchange (per [the API docs](https://app.swaggerhub.com/apis/luciditysoftware/lucidity-public-api/1.0.20)):
+
+1. POST `{username, token}` to `<tenantBaseUrl>/authenticate`
+2. The response contains an `access_token` (JWT) and `expires_in_seconds` (currently `604800` — 7 days)
+3. Every subsequent call must include the JWT as the **`api-key`** HTTP header (not `Authorization: Bearer`)
 
 What the app does on startup:
 
 1. Reads `credentials.json` → fills `apiUser`, `apiKey`, `tenantBaseUrl`, `specUrl` in the UI.
-2. POSTs `{username, token}` to `<tenantBaseUrl>/authenticate` via the server-side proxy at `/api/auth/login`.
-3. Extracts the JWT from the response (looks for `token`, `accessToken`, `access_token`, `jwt`, or `bearer`).
-4. Sets the JWT as the credential used in every subsequent `Authorization` header.
+2. POSTs the credentials to `<tenantBaseUrl>/authenticate` via the proxy at `/api/auth/login`.
+3. Extracts the JWT from `access_token` in the response.
+4. Stores the JWT and attaches it as `api-key: <jwt>` on every endpoint call.
 5. Auto-loads the OpenAPI spec.
 
-The auth status line in the Auth panel shows the current state. A manual **Authenticate** button re-runs the flow whenever you want to refresh the JWT.
+The auth status line in the Auth panel shows the current state. The **Authenticate** button re-runs the flow on demand.
 
 ### Automatic re-auth on 401
 
-If a request returns 401, the app re-runs `/authenticate` and retries the original call once. Stale/expired JWTs are transparent to you.
+If a request returns 401, the app re-runs `/authenticate` and retries the original call once. Stale/expired JWTs are handled transparently.
+
+### Rate limit
+
+Lucidity enforces 60 calls per rolling 60-second window per instance. The navigator does not throttle — be mindful when sending many requests.
 
 ### If the response shape is unexpected
 
-If `/authenticate` returns 200 but the app says "no recognisable token field", inspect the response body shown in the auth-status line. Add the field name to `extractToken()` in `public/js/authFlow.js`, or paste the JWT directly into the API key field and click **Authenticate** to skip the exchange.
+If `/authenticate` returns 200 but the app says "no recognisable token field", inspect the body shown in the auth-status line. Add the field name to `extractToken()` in `public/js/authFlow.js`, or paste the JWT into the API key field directly to skip the exchange.
 
 ### Override paths
 
-- **Different JWT header** — add an `Authorization` row under **Extra headers** to override (extra headers take priority of `Authorization` last-write-wins).
-- **No `/authenticate` endpoint** — clear the API key field; paste a JWT (or any header value) into an `Authorization` extra header.
+- **Custom header name** — add a custom `api-key` (or other) row under **Extra headers** to override.
+- **No `/authenticate` endpoint** — clear the API key field; paste a value into an `api-key` extra header.
 
 ## Make a request
 

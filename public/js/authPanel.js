@@ -133,7 +133,7 @@ export function buildAuthHeaders() {
   }
   const credential = state.bearerToken || state.apiKey;
   if (credential) {
-    headers['Authorization'] = `Bearer ${credential}`;
+    headers['api-key'] = credential;
   }
   return headers;
 }
